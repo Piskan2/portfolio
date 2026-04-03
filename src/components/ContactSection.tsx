@@ -22,8 +22,8 @@ export default function ContactSection(): ReactElement {
             Let's build something <em>great</em>
           </h2>
           <p className="mg-contact__sub mg-animate from-below">
-            Open to senior engineering roles and interesting problems. If you're working on
-            something ambitious, feel free to reach out on LinkedIn.
+            If you'd like to connect or talk engineering, feel free to reach out on
+            LinkedIn.
           </p>
           <ul className="mg-contact__links">
             {LINKS.map((l, i) => (
