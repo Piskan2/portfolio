@@ -3,9 +3,11 @@
    Every selector is scoped under .skin-repl (no global selectors). The frame
    is a flat, square terminal: square corners only, flat color fills,
    no translucent blur panels and no emoji. Exactly one @keyframes (caret blink,
-   shared by the prompt and the boot cursor), disabled under
-   prefers-reduced-motion. The BIOS POST overlay and the CRT power-on are
-   state-driven (JS timers + one-shot transforms), so they add no keyframes.
+   shared by the prompt and the boot cursor). The blink is a 0.9 Hz opacity
+   toggle — no movement — so it runs even under prefers-reduced-motion; only
+   the CRT power-on transitions are disabled there. The BIOS POST overlay and
+   the CRT power-on are state-driven (JS timers + one-shot transforms), so
+   they add no keyframes.
    ========================================================================== */
 
 .skin-repl {
@@ -432,6 +434,14 @@
 .skin-repl .repl-prompt-spacer { width: 0.5ch; }
 .skin-repl .repl-prompt-echo { color: var(--repl-ink); overflow-wrap: anywhere; }
 
+/* First-run affordance: a dim placeholder at the cursor while the input is
+   empty (terminal autosuggestion style), plus a one-line comment-style hint
+   that sits above the prompt until the first command is typed. */
+.skin-repl .repl-prompt-placeholder { color: var(--repl-muted); }
+.skin-repl .repl-hintline { margin: 0; padding: 0 0 0.3rem; color: var(--repl-muted); }
+.skin-repl .repl-hint-sign { color: var(--repl-accent-2); }
+.skin-repl .repl-hint-cmd { color: var(--repl-accent-1); font-weight: 600; }
+
 /* The single justified keyframe: block-caret blink. */
 .skin-repl .repl-caret {
   display: inline-block;
@@ -536,8 +546,7 @@
 /* ── Reduced motion ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .skin-repl .repl-caret { animation: none; opacity: 1; }
-  .skin-repl .repl-boot-caret { animation: none; opacity: 1; }
+  /* The caret blink is an opacity toggle, not movement — it stays on. */
   .skin-repl,
   .skin-repl.is-on,
   .skin-repl.is-settled { transition: none; transform: none; }

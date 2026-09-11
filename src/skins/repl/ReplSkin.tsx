@@ -360,6 +360,8 @@ export default function ReplSkin(): ReactElement {
   const userScrolledUpRef = useRef<boolean>(false);
   const [lines, setLines] = useState<CmdLine[]>(BOOT_LINES);
   const [input, setInput] = useState('');
+  // The first-run hint above the prompt is gone once any real command is run.
+  const [hintSeen, setHintSeen] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const histIdxRef = useRef<number | null>(null);
   // Lazy init reads the clock once on mount; the interval below keeps it
@@ -541,6 +543,7 @@ export default function ReplSkin(): ReactElement {
     // A pending `shutdown [y/N]` prompt takes precedence over every command.
     if (pendingShutdown) {
       setPendingShutdown(false);
+      setHintSeen(true);
       const out: CmdLine[] = [];
       if (lower === 'y' || lower === 'yes') {
         out.push({ kind: 'out', text: 'System halted.' });
@@ -557,6 +560,8 @@ export default function ReplSkin(): ReactElement {
     }
 
     if (!cmd) return;
+
+    setHintSeen(true);
 
     // `clear` wipes the whole screen — do not echo the command itself.
     if (lower === 'clear' || lower === 'cls') {
@@ -930,12 +935,23 @@ export default function ReplSkin(): ReactElement {
               pinned): it sits directly below the newest output and scrolls
               with the content. The opacity-0 input overlays just this line
               (the wrapper is position:relative), so any click on it focuses. */}
+          {!hintSeen && (
+            <p className="repl-hintline">
+              <span className="repl-hint-sign" aria-hidden="true">#</span>{' '}
+              this is a real terminal — type <span className="repl-hint-cmd">help</span> + enter, or use the tabs
+            </p>
+          )}
           <div className="repl-promptline" ref={promptRef}>
             <span className="repl-prompt-user">{HOST}@portfolio</span>
             <span className="repl-prompt-path">:~$</span>
             <span className="repl-prompt-spacer" />
             <span className="repl-prompt-echo">{input}</span>
             <span className="repl-caret" aria-hidden="true">█</span>
+            {input === '' && !pendingShutdown && (
+              <span className="repl-prompt-placeholder" aria-hidden="true">
+                type “help” to explore
+              </span>
+            )}
             <input
               ref={inputRef}
               type="text"
