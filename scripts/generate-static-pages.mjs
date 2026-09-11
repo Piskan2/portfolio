@@ -91,7 +91,7 @@ function personNode() {
 
 function renderHead({ title, description, canonical, type = 'website' }) {
   return `    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="${BASE_URL}/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="${esc(description)}" />
     <title>${esc(title)}</title>
@@ -101,11 +101,11 @@ function renderHead({ title, description, canonical, type = 'website' }) {
     <meta property="og:type" content="${type}" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:image" content="${OG_IMAGE}" />
-    <meta property="og:site_name" content="Petr Novák — Portfolio" />
+    <meta property="og:site_name" content="${esc(profile.name)} — Portfolio" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${esc(title)}" />
     <meta name="twitter:description" content="${esc(description)}" />
-    <link rel="stylesheet" href="${BASE_URL}/styles/seo.css" />`
+    <link rel="stylesheet" href="styles/seo.css" />`
 }
 
 function document({ title, description, canonical, type, ldJson, body }) {
@@ -218,8 +218,8 @@ const landingBody = `    <header class="hero">
       </p>
       <p class="pitch">${esc(profile.summary[0])}</p>
       <div class="cta-row">
-        <a class="btn" href="${BASE_URL}/profile.html">Full profile</a>
-        <a class="btn secondary" href="${BASE_URL}/terminal.html">Terminal demo</a>
+        <a class="btn" href="profile.html">Full profile</a>
+        <a class="btn secondary" href="terminal.html">Terminal demo</a>
       </div>
     </header>
     <section id="about" aria-label="About">
