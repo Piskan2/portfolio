@@ -1,0 +1,324 @@
+/* ==========================================================================
+   seo.css — clean, semantic, print-friendly layout for the static pages
+   (landing + profile).
+
+   Conventions kept here on purpose:
+     - flat color fills and solid 1px borders only,
+     - square corners everywhere (no rounded corners),
+     - no layered blur, no translucent panels,
+     - no pictographic glyphs; typography carries the voice.
+   ========================================================================== */
+
+:root {
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --muted: #64748b;
+  --accent: #0b6b4f;
+  --accent-strong: #094f3b;
+  --rule: #e2e8f0;
+  --surface: #ffffff;
+  --bg: #f8fafc;
+  --on-accent: #ffffff;
+}
+
+* {
+  background: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  line-height: 1.65;
+  font-size: 17px;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+/* Exactly one visible heading block per page; keep h1 dominant. */
+h1 {
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4em;
+  color: var(--ink);
+}
+
+h2 {
+  font-size: 1.25rem;
+  letter-spacing: -0.005em;
+  margin: 0 0 0.6em;
+  padding-bottom: 0.35em;
+  border-bottom: 2px solid var(--accent);
+  color: var(--ink);
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.2em;
+  color: var(--ink);
+}
+
+p {
+  margin: 0 0 1em;
+  color: var(--ink-soft);
+}
+
+/* Content shell: a centered, bounded column with a crisp bottom rule. */
+.container {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.hero {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2rem;
+}
+
+.hero .role {
+  display: block;
+  margin-top: 0.35em;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.pitch {
+  margin-top: 1.25em;
+  font-size: 1.1rem;
+  color: var(--ink-soft);
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.7rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-decoration: none;
+  border: 2px solid var(--accent);
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.btn:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+.btn.secondary:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+/* Inline metadata chips (location, years, period). */
+.meta {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.meta li {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.meta .label {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* Skill categories. */
+.skill-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.skill-group {
+  border: 1px solid var(--rule);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.skill-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.skill-group li {
+  padding: 0.2rem 0;
+  color: var(--ink-soft);
+}
+
+.skill-primary {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.skill-primary::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+
+/* Projects + experience timeline. */
+.block {
+  padding: 1.25rem 1.25rem 1.25rem 0;
+  border-left: 2px solid var(--rule);
+  padding-left: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.block:last-child {
+  border-left-color: transparent;
+}
+
+.block .period {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.block .location {
+  color: var(--muted);
+}
+
+.stack {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.stack li {
+  font-size: 0.82rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+ul.achievements {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+ul.achievements li {
+  margin-bottom: 0.35rem;
+  color: var(--ink-soft);
+}
+
+/* Education / certs compact lists. */
+.compact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.compact li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.compact li:last-child {
+  border-bottom: none;
+}
+
+.compact .year {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.contact-link {
+  font-weight: 600;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Accessible focus rings on every keyboard-operable control. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  .cta-row {
+    display: none;
+  }
+
+  .block {
+    border-left-color: #999;
+  }
+}

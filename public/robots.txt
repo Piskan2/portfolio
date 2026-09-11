@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://piskan2.github.io/portfolio/sitemap.xml

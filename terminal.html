@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/portfolio/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Interactive terminal demo — explore Petr Novák's full-stack portfolio in a typeable REPL skin."
+    />
+    <title>Terminal Demo — Petr Novák</title>
+
+    <meta property="og:title" content="Terminal Demo — Petr Novák" />
+    <meta property="og:description" content="Interactive terminal demo of the portfolio REPL skin." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://piskan2.github.io/portfolio/terminal.html" />
+    <meta property="og:image" content="https://piskan2.github.io/portfolio/favicon.svg" />
+    <meta property="og:site_name" content="Petr Novák — Portfolio" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Terminal Demo — Petr Novák" />
+    <meta name="twitter:description" content="Interactive terminal demo of the portfolio REPL skin." />
+
+    <link rel="stylesheet" href="/portfolio/styles/seo.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Terminal Demo</h1>
+      <p>
+        This is the interactive showcase. The page content is rendered by React, so type
+        <code>help</code>, <code>projects</code>, or <code>skills</code> to explore.
+      </p>
+      <p>
+        <a href="/portfolio/profile.html">Full profile (static)</a> ·
+        <a href="/portfolio/">Landing</a>
+      </p>
+    </main>
+    <div id="terminal-root"></div>
+    <script type="module" src="/src/terminal.tsx"></script>
+  </body>
+</html>

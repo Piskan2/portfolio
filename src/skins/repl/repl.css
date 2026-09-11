@@ -1,8 +1,8 @@
 /* ==========================================================================
    Concept skin: REPL — full-screen, non-scrolling typeable terminal.
    Every selector is scoped under .skin-repl (no global selectors). The frame
-   is a flat, square terminal: no rounded corners, no shadows, no gradients,
-   no backdrop filters and no emoji. Exactly one @keyframes (caret blink,
+   is a flat, square terminal: square corners only, flat color fills,
+   no translucent blur panels and no emoji. Exactly one @keyframes (caret blink,
    shared by the prompt and the boot cursor), disabled under
    prefers-reduced-motion. The BIOS POST overlay and the CRT power-on are
    state-driven (JS timers + one-shot transforms), so they add no keyframes.

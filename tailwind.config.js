@@ -94,7 +94,7 @@ export default {
           },
         }
       },
-      // Improved shadow scale for better depth
+      // Improved depth scale for layered focus
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 1px 10px -2px rgba(0, 0, 0, 0.05)',
         'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -128,7 +128,7 @@ export default {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
-      // Border radius scale for consistent design
+      // Corner scale for consistent design
       borderRadius: {
         'none': '0',
         'sm': '0.375rem',
