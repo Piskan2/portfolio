@@ -1,51 +1,35 @@
 // Build-time generator for the two crawlable static pages.
 //
-// Runs AFTER `vite build` (see the "build" script in package.json) so that
-// public/ and dist/terminal.html already exist. It bundles src/examples/
-// content.ts with esbuild (build-only tooling — never shipped to a browser),
-// then writes dist/index.html (landing) and dist/profile.html (static HR
-// profile). Every name/company/date/location comes from content.ts.
+// `buildPages()` bundles src/examples/content.ts with esbuild (build-only
+// tooling — never shipped to a browser) and returns the generated landing
+// (index.html) and profile (profile.html) HTML. When run directly
+// (`node scripts/generate-static-pages.mjs`, wired into the build script) it
+// writes them to dist/ after `vite build`. The Vite dev plugin imports
+// buildPages() to serve the identical pages in dev, so `npm run dev` mirrors
+// the deployed site.
 //
-// .mjs at repo root: not bundled by Vite, not type-checked by tsc.
+// Every local asset/link path is RELATIVE (styles/seo.css, profile.html, …)
+// so the pages work in dev, preview, the GitHub Pages deploy, and file:// —
+// the only absolute URLs are the canonical/og:url/social ones, which must be
+// absolute by definition and come from the single BASE_URL constant.
 
 import { build as esbuild } from 'esbuild'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const rootDir = fileURLToPath(new URL('..', import.meta.url))
-const DIST_DIR = rootDir + 'dist'
-const GENERATOR_DIR = DIST_DIR + '/.gen'
+// The generator is imported by the Vite config, where import.meta.url would
+// point at the (bundled) config, not this file. Both callers (the CLI and the
+// dev plugin) run from the project root, so process.cwd() is the reliable base.
+const rootDir = process.cwd()
 
-// Single source of truth for every deployed URL.
+// Single source of truth for every deployed (absolute) URL.
 const BASE_URL = 'https://piskan2.github.io/portfolio'
 const OG_IMAGE = `${BASE_URL}/favicon.svg`
 
 // ---------------------------------------------------------------------------
-// Load content (bundled from the single TypeScript source of truth).
-// ---------------------------------------------------------------------------
-mkdirSync(GENERATOR_DIR, { recursive: true })
-
-await esbuild({
-  entryPoints: [rootDir + 'src/examples/content.ts'],
-  outfile: GENERATOR_DIR + '/content.mjs',
-  bundle: true,
-  format: 'esm',
-  platform: 'node',
-  logLevel: 'silent',
-})
-
-const {
-  profile,
-  contact,
-  certs,
-  projects,
-  experience,
-  skillGroups,
-  writing,
-} = await import(GENERATOR_DIR + '/content.mjs')
-
-// ---------------------------------------------------------------------------
-// Small helpers.
+// Small pure helpers (no content dependency).
 // ---------------------------------------------------------------------------
 function esc(s) {
   return String(s)
@@ -61,35 +45,7 @@ function jsonLdScript(obj) {
   return `<script type="application/ld+json">${safe}</script>`
 }
 
-function personNode() {
-  const knowsAbout = skillGroups.flatMap((g) => g.skills.map((s) => s.name))
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: profile.name,
-    jobTitle: profile.role,
-    residence: {
-      '@type': 'Place',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: profile.location.split(',')[0].trim(),
-      },
-    },
-    worksFor: {
-      '@type': 'Organization',
-      name: profile.currentCompany,
-    },
-    knowsAbout,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'employment relations',
-      url: contact.linkedin,
-    },
-    sameAs: [contact.linkedin],
-  }
-}
-
-function renderHead({ title, description, canonical, type = 'website' }) {
+function renderHead({ title, description, canonical, type = 'website', siteName }) {
   return `    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -101,18 +57,18 @@ function renderHead({ title, description, canonical, type = 'website' }) {
     <meta property="og:type" content="${type}" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:image" content="${OG_IMAGE}" />
-    <meta property="og:site_name" content="${esc(profile.name)} — Portfolio" />
+    <meta property="og:site_name" content="${esc(siteName)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${esc(title)}" />
     <meta name="twitter:description" content="${esc(description)}" />
     <link rel="stylesheet" href="styles/seo.css" />`
 }
 
-function document({ title, description, canonical, type, ldJson, body }) {
+function document({ title, description, canonical, type, ldJson, body, siteName }) {
   return `<!doctype html>
 <html lang="en">
   <head>
-${renderHead({ title, description, canonical, type })}
+${renderHead({ title, description, canonical, type, siteName })}
 ${ldJson ? '\n' + ldJson + '\n' : ''}  </head>
   <body>
     <main class="container">
@@ -121,77 +77,6 @@ ${body}
   </body>
 </html>
 `
-}
-
-// ---------------------------------------------------------------------------
-// Section renderers for the static profile.
-// ---------------------------------------------------------------------------
-function renderSkills() {
-  const groups = skillGroups.map((g) => {
-    const items = g.skills
-      .map((s) => `        <li class="${s.primary ? 'skill-primary' : ''}">${esc(s.name)}</li>`)
-      .join('\n')
-    return `    <div class="skill-group">
-      <h3>${esc(g.title)}</h3>
-      <ul>
-${items}
-      </ul>
-    </div>`
-  })
-  return `  <section id="skills" aria-label="Skills by category">
-    <h2>Skills by category</h2>
-    <div class="skill-groups">
-${groups.join('\n')}
-    </div>
-  </section>`
-}
-
-function renderProjects() {
-  const blocks = projects.map((p) => {
-    const stack = p.stack.map((t) => `          <li>${esc(t)}</li>`).join('\n')
-    return `    <article class="block">
-      <h3>${esc(p.title)}</h3>
-      <p><strong>${esc(p.company)}</strong> &middot; ${esc(p.period)}</p>
-      <p>${esc(p.description)}</p>
-      <p><span class="label">Stack:</span></p>
-      <ul class="stack">
-${stack}
-      </ul>
-    </article>`
-  })
-  return `  <section id="projects" aria-label="Selected projects">
-    <h2>Selected projects</h2>
-${blocks.join('\n')}
-  </section>`
-}
-
-function renderExperience() {
-  const blocks = experience.map((e) => {
-    const loc = e.location ? ` &middot; ${esc(e.location)}` : ''
-    const achievements = e.achievements.map((a) => `          <li>${esc(a)}</li>`).join('\n')
-    const tech = e.techStack.map((t) => `          <li>${esc(t)}</li>`).join('\n')
-    const achHtml = achievements
-      ? `      <ul class="achievements">
-${achievements}
-      </ul>`
-      : ''
-    const techHtml = tech
-      ? `      <ul class="stack">
-${tech}
-      </ul>`
-      : ''
-    return `    <article class="block">
-      <h3>${esc(e.company)}</h3>
-      <p>${esc(e.role)} &middot; ${esc(e.period)}${loc}</p>
-      <p>${esc(e.description)}</p>
-${achHtml}
-${techHtml}
-    </article>`
-  })
-  return `  <section id="experience" aria-label="Experience timeline">
-    <h2>Experience timeline</h2>
-${blocks.join('\n')}
-  </section>`
 }
 
 function renderList(sectionId, heading, rows) {
@@ -204,13 +89,135 @@ ${rows}
 }
 
 // ---------------------------------------------------------------------------
-// Landing page (dist/index.html): crawlable, no JS.
+// buildPages(): bundle content.ts and return the two generated pages.
 // ---------------------------------------------------------------------------
-const LANDING_CANONICAL = `${BASE_URL}/`
-const LANDING_DESCRIPTION = `${profile.name} — ${profile.role}. ${profile.summary[0].slice(0, 150)}`
-const LANDING_TITLE = `${profile.name} — ${profile.role}`
+export async function buildPages() {
+  const genDir = join(tmpdir(), 'portfolio-static-pages')
+  mkdirSync(genDir, { recursive: true })
+  const outfile = join(genDir, 'content.mjs')
+  await esbuild({
+    entryPoints: [join(rootDir, 'src/examples/content.ts')],
+    outfile,
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    logLevel: 'silent',
+  })
 
-const landingBody = `    <header class="hero">
+  const {
+    profile,
+    contact,
+    certs,
+    projects,
+    experience,
+    skillGroups,
+    writing,
+  } = await import(pathToFileURL(outfile).href)
+
+  const siteName = `${profile.name} — Portfolio`
+
+  function personNode() {
+    const knowsAbout = skillGroups.flatMap((g) => g.skills.map((s) => s.name))
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: profile.name,
+      jobTitle: profile.role,
+      residence: {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: profile.location.split(',')[0].trim(),
+        },
+      },
+      worksFor: {
+        '@type': 'Organization',
+        name: profile.currentCompany,
+      },
+      knowsAbout,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'employment relations',
+        url: contact.linkedin,
+      },
+      sameAs: [contact.linkedin],
+    }
+  }
+
+  function renderSkills() {
+    const groups = skillGroups.map((g) => {
+      const items = g.skills
+        .map((s) => `        <li class="${s.primary ? 'skill-primary' : ''}">${esc(s.name)}</li>`)
+        .join('\n')
+      return `    <div class="skill-group">
+      <h3>${esc(g.title)}</h3>
+      <ul>
+${items}
+      </ul>
+    </div>`
+    })
+    return `  <section id="skills" aria-label="Skills by category">
+    <h2>Skills by category</h2>
+    <div class="skill-groups">
+${groups.join('\n')}
+    </div>
+  </section>`
+  }
+
+  function renderProjects() {
+    const blocks = projects.map((p) => {
+      const stack = p.stack.map((t) => `          <li>${esc(t)}</li>`).join('\n')
+      return `    <article class="block">
+      <h3>${esc(p.title)}</h3>
+      <p><strong>${esc(p.company)}</strong> &middot; ${esc(p.period)}</p>
+      <p>${esc(p.description)}</p>
+      <p><span class="label">Stack:</span></p>
+      <ul class="stack">
+${stack}
+      </ul>
+    </article>`
+    })
+    return `  <section id="projects" aria-label="Selected projects">
+    <h2>Selected projects</h2>
+${blocks.join('\n')}
+  </section>`
+  }
+
+  function renderExperience() {
+    const blocks = experience.map((e) => {
+      const loc = e.location ? ` &middot; ${esc(e.location)}` : ''
+      const achievements = e.achievements.map((a) => `          <li>${esc(a)}</li>`).join('\n')
+      const tech = e.techStack.map((t) => `          <li>${esc(t)}</li>`).join('\n')
+      const achHtml = achievements
+        ? `      <ul class="achievements">
+${achievements}
+      </ul>`
+        : ''
+      const techHtml = tech
+        ? `      <ul class="stack">
+${tech}
+      </ul>`
+        : ''
+      return `    <article class="block">
+      <h3>${esc(e.company)}</h3>
+      <p>${esc(e.role)} &middot; ${esc(e.period)}${loc}</p>
+      <p>${esc(e.description)}</p>
+${achHtml}
+${techHtml}
+    </article>`
+    })
+    return `  <section id="experience" aria-label="Experience timeline">
+    <h2>Experience timeline</h2>
+${blocks.join('\n')}
+  </section>`
+  }
+
+  // ----- Landing page (dist/index.html) -----
+  const LANDING_CANONICAL = `${BASE_URL}/`
+  const LANDING_DESCRIPTION = `${profile.name} — ${profile.role}. ${profile.summary[0].slice(0, 150)}`
+  const LANDING_TITLE = `${profile.name} — ${profile.role}`
+
+  const landingBody = `    <header class="hero">
       <h1>${esc(profile.name)} &mdash; ${esc(profile.role)}</h1>
       <p class="meta">
         <span><span class="label">Location</span>: ${esc(profile.location)}</span>
@@ -227,54 +234,53 @@ const landingBody = `    <header class="hero">
       <p>${esc(profile.summary[0])}</p>
     </section>`
 
-const landingHtml = document({
-  title: LANDING_TITLE,
-  description: LANDING_DESCRIPTION,
-  canonical: LANDING_CANONICAL,
-  type: 'website',
-  ldJson: jsonLdScript(personNode()),
-  body: landingBody,
-})
+  const landingHtml = document({
+    title: LANDING_TITLE,
+    description: LANDING_DESCRIPTION,
+    canonical: LANDING_CANONICAL,
+    type: 'website',
+    siteName,
+    ldJson: jsonLdScript(personNode()),
+    body: landingBody,
+  })
 
-// ---------------------------------------------------------------------------
-// Static profile page (dist/profile.html): crawlable HR/bot profile, no JS.
-// ---------------------------------------------------------------------------
-const PROFILE_CANONICAL = `${BASE_URL}/profile.html`
-const PROFILE_DESCRIPTION = `${profile.name} — ${profile.role}, ${profile.location}. ${profile.yearsExperience} years of experience. Full timeline, skills, projects, education, and certifications.`
-const PROFILE_TITLE = `Profile — ${profile.name}`
+  // ----- Static profile page (dist/profile.html) -----
+  const PROFILE_CANONICAL = `${BASE_URL}/profile.html`
+  const PROFILE_DESCRIPTION = `${profile.name} — ${profile.role}, ${profile.location}. ${profile.yearsExperience} years of experience. Full timeline, skills, projects, education, and certifications.`
+  const PROFILE_TITLE = `Profile — ${profile.name}`
 
-const metaHtml = `      <ul class="meta">
+  const metaHtml = `      <ul class="meta">
         <li><span class="label">Location</span> ${esc(profile.location)}</li>
         <li><span class="label">Experience</span> ${esc(profile.yearsExperience)}</li>
         <li><span class="label">Career start</span> ${esc(profile.careerStart)}</li>
         <li><span class="label">Currently at</span> ${esc(profile.currentCompany)}</li>
       </ul>`
 
-const summaryHtml = profile.summary.map((p) => `      <p>${esc(p)}</p>`).join('\n')
+  const summaryHtml = profile.summary.map((p) => `      <p>${esc(p)}</p>`).join('\n')
 
-const contactHtml = `      Connect on <a class="contact-link" href="${esc(contact.linkedin)}">${esc(contact.label)}</a>`
+  const contactHtml = `      Connect on <a class="contact-link" href="${esc(contact.linkedin)}">${esc(contact.label)}</a>`
 
-const eduRows = profile.education
-  .map(
-    (e) =>
-      `      <li><h3>${esc(e.degree)}</h3> ${esc(e.institution)} <span class="year">${esc(e.years)}</span></li>`,
-  )
-  .join('\n')
+  const eduRows = profile.education
+    .map(
+      (e) =>
+        `      <li><h3>${esc(e.degree)}</h3> ${esc(e.institution)} <span class="year">${esc(e.years)}</span></li>`,
+    )
+    .join('\n')
 
-const certRows = certs
-  .map((c) => `      <li><h3>${esc(c.name)}</h3> ${esc(c.issuer)}</li>`)
-  .join('\n')
+  const certRows = certs
+    .map((c) => `      <li><h3>${esc(c.name)}</h3> ${esc(c.issuer)}</li>`)
+    .join('\n')
 
-const writingHtml = writing.length
-  ? writing
-      .map(
-        (w) =>
-          `      <li><h3>${esc(w.title)}</h3> <span class="year">${esc(w.date)}</span><p>${esc(w.excerpt)}</p></li>`,
-      )
-      .join('\n')
-  : '      <p class="empty">No published writing yet</p>'
+  const writingHtml = writing.length
+    ? writing
+        .map(
+          (w) =>
+            `      <li><h3>${esc(w.title)}</h3> <span class="year">${esc(w.date)}</span><p>${esc(w.excerpt)}</p></li>`,
+        )
+        .join('\n')
+    : '      <p class="empty">No published writing yet</p>'
 
-const profileBody = `    <header class="hero">
+  const profileBody = `    <header class="hero">
       <h1>${esc(profile.name)}</h1>
       <span class="role">${esc(profile.role)}</span>
 ${metaHtml}
@@ -300,39 +306,60 @@ ${contactHtml}
       <p>${esc(profile.name)} &middot; ${esc(profile.role)}</p>
     </footer>`
 
-const profileLdJson = jsonLdScript({
-  '@context': 'https://schema.org',
-  '@graph': [
-    personNode(),
-    {
-      '@type': 'ItemList',
-      name: 'Selected projects',
-      description: 'Projects from the profile timeline.',
-      itemListElement: projects.map((p, i) => ({
-        '@type': 'CreativeWork',
-        position: i + 1,
-        name: p.title,
-        description: p.description,
-        author: { '@type': 'Person', name: profile.name },
-      })),
+  const profileLdJson = jsonLdScript({
+    '@context': 'https://schema.org',
+    '@graph': [
+      personNode(),
+      {
+        '@type': 'ItemList',
+        name: 'Selected projects',
+        description: 'Projects from the profile timeline.',
+        itemListElement: projects.map((p, i) => ({
+          '@type': 'CreativeWork',
+          position: i + 1,
+          name: p.title,
+          description: p.description,
+          author: { '@type': 'Person', name: profile.name },
+        })),
+      },
+    ],
+  })
+
+  const profileHtml = document({
+    title: PROFILE_TITLE,
+    description: PROFILE_DESCRIPTION,
+    canonical: PROFILE_CANONICAL,
+    type: 'ProfilePage',
+    siteName,
+    ldJson: profileLdJson,
+    body: profileBody,
+  })
+
+  return {
+    landingHtml,
+    profileHtml,
+    counts: {
+      projects: projects.length,
+      experience: experience.length,
+      certs: certs.length,
+      writing: writing.length,
     },
-  ],
-})
-
-const profileHtml = document({
-  title: PROFILE_TITLE,
-  description: PROFILE_DESCRIPTION,
-  canonical: PROFILE_CANONICAL,
-  type: 'ProfilePage',
-  ldJson: profileLdJson,
-  body: profileBody,
-})
+  }
+}
 
 // ---------------------------------------------------------------------------
-// Write.
+// CLI: when run directly, write the pages to dist/.
 // ---------------------------------------------------------------------------
-writeFileSync(DIST_DIR + '/index.html', landingHtml)
-writeFileSync(DIST_DIR + '/profile.html', profileHtml)
+const isMain =
+  process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)
 
-console.log('[generate-static-pages] wrote dist/index.html and dist/profile.html')
-console.log(`[generate-static-pages] ${projects.length} projects, ${experience.length} roles, ${certs.length} certs, ${writing.length} writing items`)
+if (isMain) {
+  const distDir = join(rootDir, 'dist')
+  const { landingHtml, profileHtml, counts } = await buildPages()
+  writeFileSync(join(distDir, 'index.html'), landingHtml)
+  writeFileSync(join(distDir, 'profile.html'), profileHtml)
+  console.log('[generate-static-pages] wrote dist/index.html and dist/profile.html')
+  console.log(
+    `[generate-static-pages] ${counts.projects} projects, ${counts.experience} roles, ${counts.certs} certs, ${counts.writing} writing items`,
+  )
+}

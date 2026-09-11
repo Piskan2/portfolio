@@ -2,25 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/portfolio/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Dev-only landing. The canonical crawlable landing page is generated into dist/ at build time."
-    />
-    <title>Portfolio — dev landing</title>
-    <link rel="stylesheet" href="/portfolio/styles/seo.css" />
+    <title>Portfolio</title>
+    <link rel="stylesheet" href="/styles/seo.css" />
   </head>
   <body>
-    <main>
-      <h1>Petr Novák — Portfolio</h1>
+    <main class="container">
+      <h1>Portfolio</h1>
       <p>
-        Dev-only shell. Load a build with <code>npm run build</code> and open the generated pages.
+        This is the dev fallback. In <code>npm run dev</code> the generated
+        landing page is served automatically; in a build the crawlable landing
+        and profile pages are written to <code>dist/</code>.
       </p>
-      <p>
-        <a href="/portfolio/profile.html">Full profile</a> ·
-        <a href="/portfolio/terminal.html">Terminal demo</a>
-      </p>
+      <div class="cta-row">
+        <a class="btn" href="/profile.html">Full profile</a>
+        <a class="btn secondary" href="/terminal.html">Terminal demo</a>
+      </div>
     </main>
   </body>
 </html>
