@@ -45,7 +45,7 @@ function jsonLdScript(obj) {
   return `<script type="application/ld+json">${safe}</script>`
 }
 
-function renderHead({ title, description, canonical, type = 'website', siteName }) {
+function renderHead({ title, description, canonical, type = 'website', siteName, css = 'styles/seo.css' }) {
   return `    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,17 +61,17 @@ function renderHead({ title, description, canonical, type = 'website', siteName 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${esc(title)}" />
     <meta name="twitter:description" content="${esc(description)}" />
-    <link rel="stylesheet" href="styles/seo.css" />`
+    <link rel="stylesheet" href="${css}" />`
 }
 
-function document({ title, description, canonical, type, ldJson, body, siteName }) {
+function document({ title, description, canonical, type, ldJson, body, siteName, css = 'styles/seo.css', mainClass = 'container' }) {
   return `<!doctype html>
 <html lang="en">
   <head>
-${renderHead({ title, description, canonical, type, siteName })}
+${renderHead({ title, description, canonical, type, siteName, css })}
 ${ldJson ? '\n' + ldJson + '\n' : ''}  </head>
   <body>
-    <main class="container">
+    <main class="${mainClass}">
 ${body}
     </main>
   </body>
@@ -217,22 +217,42 @@ ${blocks.join('\n')}
   const LANDING_DESCRIPTION = `${profile.name} — ${profile.role}. ${profile.summary[0].slice(0, 150)}`
   const LANDING_TITLE = `${profile.name} — ${profile.role}`
 
-  const landingBody = `    <header class="hero">
+  // Shell-style host derived from the name (NFD-normalised, diacritics
+  // stripped, first token, lowercased) — never hardcoded.
+  const host = profile.name
+    .split(' ')[0]
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  // The hero carries the first summary line; About carries the rest, so no
+  // paragraph is repeated.
+  const aboutHtml = profile.summary
+    .slice(1)
+    .map((p) => `        <p>${esc(p)}</p>`)
+    .join('\n')
+
+  const landingBody = `    <header class="term-bar">
+      <span class="term-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="term-title">${esc(host)}@portfolio — bash</span>
+    </header>
+    <div class="term-body">
+      <p class="prompt-line"><span class="prompt">${esc(host)}@portfolio:~$</span> whoami<span class="caret" aria-hidden="true"></span></p>
       <h1>${esc(profile.name)} &mdash; ${esc(profile.role)}</h1>
       <p class="meta">
-        <span><span class="label">Location</span>: ${esc(profile.location)}</span>
-        <span><span class="label">Experience</span>: ${esc(profile.yearsExperience)}</span>
+        <span><span class="label">Location</span> ${esc(profile.location)}</span>
+        <span><span class="label">Experience</span> ${esc(profile.yearsExperience)}</span>
       </p>
       <p class="pitch">${esc(profile.summary[0])}</p>
       <div class="cta-row">
         <a class="btn" href="profile.html">Full profile</a>
         <a class="btn secondary" href="terminal.html">Terminal demo</a>
       </div>
-    </header>
-    <section id="about" aria-label="About">
-      <h2>About</h2>
-      <p>${esc(profile.summary[0])}</p>
-    </section>`
+      <section id="about" aria-label="About">
+        <h2>About</h2>
+${aboutHtml}
+      </section>
+    </div>`
 
   const landingHtml = document({
     title: LANDING_TITLE,
@@ -240,6 +260,8 @@ ${blocks.join('\n')}
     canonical: LANDING_CANONICAL,
     type: 'website',
     siteName,
+    css: 'styles/landing.css',
+    mainClass: 'term',
     ldJson: jsonLdScript(personNode()),
     body: landingBody,
   })

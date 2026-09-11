@@ -1,0 +1,247 @@
+/* ==========================================================================
+   landing.css — terminal-styled landing page.
+
+   Flat phosphor palette matching the REPL skin. Conventions kept on purpose:
+     - flat color fills and solid 1px borders only,
+     - square corners everywhere,
+     - no layered blur, no translucent panels,
+     - no pictographic glyphs; typography carries the voice,
+     - the blinking caret is disabled under reduced motion.
+   ========================================================================== */
+
+:root {
+  --lm-bg: #0b120d;
+  --lm-panel: #101a13;
+  --lm-bar: #0e1710;
+  --lm-ink: #d7e8dc;
+  --lm-muted: #8fa899;
+  --lm-green: #3ddc84;
+  --lm-amber: #ffc857;
+  --lm-line: #1e2b22;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--lm-bg);
+  color: var(--lm-ink);
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Centered terminal window. */
+main.term {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+}
+
+/* Title bar: three square "window" markers + a shell title. */
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--lm-line);
+  background: var(--lm-bar);
+  padding: 0.55rem 0.9rem;
+}
+
+.term-dots {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.term-dots span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #2e4a3a;
+}
+
+.term-title {
+  color: var(--lm-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.term-body {
+  border: 1px solid var(--lm-line);
+  border-top: none;
+  background: var(--lm-panel);
+  padding: 2rem 2rem 2.5rem;
+}
+
+.prompt-line {
+  margin: 0 0 0.75rem;
+  color: var(--lm-ink);
+}
+
+.prompt {
+  color: var(--lm-green);
+}
+
+/* Block caret at the prompt; static when motion is reduced. */
+.caret {
+  display: inline-block;
+  width: 0.6ch;
+  height: 1.05em;
+  margin-left: 0.3ch;
+  vertical-align: text-bottom;
+  background: var(--lm-green);
+  animation: lm-caret-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes lm-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+h1 {
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.15rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+  color: var(--lm-ink);
+  font-weight: 700;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  margin: 0 0 1.25rem;
+  color: var(--lm-muted);
+  font-size: 0.95rem;
+}
+
+.meta .label {
+  color: var(--lm-amber);
+  font-weight: 600;
+}
+
+.pitch {
+  margin: 0 0 1.75rem;
+  color: var(--lm-ink);
+}
+
+/* Terminal-style commands. Primary = green fill with the bg as text. */
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2.25rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+  border: 1px solid var(--lm-green);
+  background: var(--lm-green);
+  color: var(--lm-bg);
+}
+
+.btn:hover {
+  background: transparent;
+  color: var(--lm-green);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--lm-green);
+}
+
+.btn.secondary:hover {
+  background: var(--lm-green);
+  color: var(--lm-bg);
+}
+
+h2 {
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--lm-line);
+  color: var(--lm-green);
+}
+
+h2::before {
+  content: "# ";
+  color: var(--lm-muted);
+}
+
+#about p {
+  margin: 0 0 0.9rem;
+  color: var(--lm-muted);
+}
+
+/* Accessible focus rings on every keyboard-operable control. */
+:focus-visible {
+  outline: 2px solid var(--lm-amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+
+  * {
+    transition: none !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  main.term {
+    max-width: 100%;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .term-bar,
+  .term-body {
+    border: none;
+    background: #fff;
+    padding: 1rem 0;
+  }
+
+  .term-dots,
+  .term-title,
+  .caret,
+  .prompt {
+    display: none;
+  }
+
+  h1,
+  .pitch,
+  #about p {
+    color: #000;
+  }
+
+  .btn {
+    display: none;
+  }
+}
