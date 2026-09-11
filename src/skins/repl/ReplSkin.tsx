@@ -229,7 +229,7 @@ function MiniSession({ active, reduceMotion }: MiniSessionProps) {
             <span className={seg.tone === 'cmd' ? 'repl-cmdtext' : 'repl-out'}>
               {seg.text.slice(0, shown)}
             </span>
-            {i === cur && <span className="repl-caret">█</span>}
+            {i === cur && !done && <span className="repl-caret">█</span>}
           </span>
         );
       })}

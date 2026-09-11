@@ -446,6 +446,7 @@
 .skin-repl .repl-caret {
   display: inline-block;
   width: 0.62ch;
+  overflow: hidden;
   color: var(--repl-accent-1);
   animation: repl-caret-blink 1.1s step-end infinite;
 }
