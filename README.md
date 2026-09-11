@@ -1,68 +1,52 @@
-# Petr Novák Portfolio
+# Portfolio (REPL)
 
-Personal portfolio site built with React, TypeScript, Vite, and Tailwind CSS.
+A personal portfolio rendered as a single full-screen, typeable terminal — the REPL concept skin.
+Built with React, TypeScript, Vite 7, and ESLint. All biographical content (name, role, companies,
+dates, locations, projects, skills, contact) comes from `src/examples/content.ts`, so no personal
+data is hardcoded in the skin.
 
-## Highlights
+## Features
 
-- focused single-page portfolio with clear section-based navigation
-- custom dark visual system with motion driven by `IntersectionObserver`
-- responsive layout optimized for desktop and mobile
-- automated GitHub Pages deployment via GitHub Actions
+- One design only: the REPL skin renders full-screen at the root URL (and at `#repl`).
+- Interactive terminal: type commands (`projects`, `writing`, `experience`, `skills`, `contact`,
+  `help`, `whoami`, `date`, `uname -a`, `clear`, `reboot`, …) or use the title-bar section tabs.
+- MS-DOS-style BIOS POST on power-up; the inline prompt lives in the stream (it is not pinned chrome).
+- No theme picker — this is the only theme.
 
 ## Stack
 
-- React 19
-- TypeScript
-- Vite 7
-- Tailwind CSS 4
-- ESLint 9
+- React 19, TypeScript 5, Vite 7, ESLint 9
 
 ## Local development
 
 ```bash
 npm install
-npm run dev
+npm run dev     # http://localhost:5173/portfolio/
 npm run lint
-npm run build
+npm run build   # outputs dist/
 ```
 
 ## Project structure
 
 ```text
 src/
-  components/
-    AboutSection.tsx
-    ContactSection.tsx
-    ExperienceSection.tsx
-    Footer.tsx
-    HeroSection.tsx
-    Navbar.tsx
-    SkillsSection.tsx
-  hooks/
-    useScrollReveal.ts
-  App.tsx
-  index.css
-  main.tsx
+  skins/
+    repl/
+      ReplSkin.tsx    # the REPL skin — full-screen typeable terminal
+      repl.css
+  examples/
+    content.ts        # all portfolio content (single source of truth)
+  main.tsx            # app entry
+  App.tsx             # renders REPL as the only theme
 ```
 
 ## Deployment
 
-This repository is configured for GitHub Pages:
+This repository is configured for GitHub Pages. The Vite `base` path is set to `/portfolio/`.
+All deployment settings live in three places — update them to change the target:
 
-- repository: `https://github.com/Piskan2/portfolio`
-- site: `https://piskan2.github.io/portfolio/`
+- `homepage` in `package.json`
+- `base` in `vite.config.ts`
+- `.github/workflows/deploy.yml`
 
-To enable deployment:
-
-1. Open **Settings** → **Pages** in the GitHub repository.
-2. Set **Source** to **GitHub Actions**.
-3. Push to `master` or run the workflow manually from the **Actions** tab.
-
-The deployment workflow currently watches the `master` branch.
-
-## Notes
-
-- the Vite `base` path is configured for GitHub Pages deployment from `/portfolio/`
-- generated build artifacts are excluded from version control
-- the project targets Node.js `22.12+` to match the Vite 7 runtime requirement
-- if you want the site to live at `/` instead of `/portfolio/`, the repository must be renamed to `Piskan2.github.io` or served from a custom domain
+The generated build artifacts in `dist/` are excluded from version control.

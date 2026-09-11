@@ -1,27 +1,9 @@
-import Navbar from './components/Navbar';
-import HeroSection from './components/HeroSection';
-import AboutSection from './components/AboutSection';
-import SkillsSection from './components/SkillsSection';
-import ExperienceSection from './components/ExperienceSection';
-import ContactSection from './components/ContactSection';
-import Footer from './components/Footer';
+import ReplSkin from './skins/repl/ReplSkin'
 
+/**
+ * REPL is the only design. The shell renders it full-screen — no theme picker,
+ * no hash routing to other concepts. Any hash (or none) shows this skin.
+ */
 export default function App() {
-  return (
-    <>
-      <Navbar />
-      <main id="main-content">
-        <HeroSection />
-        <div className="mg-section-divide" />
-        <AboutSection />
-        <div className="mg-section-divide" />
-        <SkillsSection />
-        <div className="mg-section-divide" />
-        <ExperienceSection />
-        <div className="mg-section-divide" />
-        <ContactSection />
-      </main>
-      <Footer />
-    </>
-  );
+  return <ReplSkin />
 }

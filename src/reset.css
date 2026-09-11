@@ -1,0 +1,21 @@
+/*
+ * App-shell global reset (NOT a skin).
+ *
+ * Intentionally uses document-level selectors (outside .skin-repl) so the
+ * full-screen REPL:
+ *   - has no white page border around it (browsers default body to margin: 8px),
+ *   - never produces a page-level scroll (no margin overflow past the viewport).
+ *
+ * Loaded once from main.tsx, ahead of the skin's scoped CSS.
+ */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

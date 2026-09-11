@@ -1,0 +1,544 @@
+/* ==========================================================================
+   Concept skin: REPL — full-screen, non-scrolling typeable terminal.
+   Every selector is scoped under .skin-repl (no global selectors). The frame
+   is a flat, square terminal: no rounded corners, no shadows, no gradients,
+   no backdrop filters and no emoji. Exactly one @keyframes (caret blink,
+   shared by the prompt and the boot cursor), disabled under
+   prefers-reduced-motion. The BIOS POST overlay and the CRT power-on are
+   state-driven (JS timers + one-shot transforms), so they add no keyframes.
+   ========================================================================== */
+
+.skin-repl {
+  /* Locked phosphor palette (contrast-verified). */
+  --repl-bg: #0b120d;
+  --repl-surface: #101a13;
+  --repl-ink: #d7e8dc;
+  --repl-muted: #7e9b87;
+  --repl-border: #517060;
+  --repl-faint: #26362c;
+  --repl-accent-1: #3ddc84;
+  --repl-accent-2: #ffc857;
+
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--repl-bg);
+  color: var(--repl-ink);
+  font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* CRT power-on: start as a 1px line; .is-on overshoots, .is-settled rests. */
+  transform: scaleY(0.004);
+  transform-origin: 50% 50%;
+}
+
+.skin-repl.is-on {
+  transform: scale(1.006, 1.012);
+  transition: transform 240ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.skin-repl.is-settled {
+  transform: none;
+  transition: transform 220ms ease-out;
+}
+
+.skin-repl *,
+.skin-repl *::before,
+.skin-repl *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.skin-repl :focus-visible {
+  outline: 2px solid var(--repl-accent-2);
+  outline-offset: 2px;
+}
+
+/* ── Title bar ─────────────────────────────────────────────────────────── */
+
+.skin-repl .repl-titlebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  background: var(--repl-surface);
+  border-bottom: 1px solid var(--repl-border);
+}
+
+.skin-repl .repl-titlebar-host {
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.skin-repl .repl-titlebar-user { color: var(--repl-accent-1); }
+.skin-repl .repl-titlebar-path { color: var(--repl-muted); }
+
+.skin-repl .repl-titlebar-nav {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.skin-repl .repl-tab {
+  font-family: inherit;
+  font-size: 0.8em;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--repl-muted);
+  background: transparent;
+  border: 1px solid var(--repl-border);
+  padding: 0.4em 0.7em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.skin-repl .repl-tab:hover { color: var(--repl-ink); border-color: var(--repl-muted); }
+
+/* Locked button style: accent-1 fill + bg text (ink-on-accent is 1.40:1 — never used). */
+.skin-repl .repl-tab.is-active,
+.skin-repl .repl-tab.is-active:hover {
+  color: var(--repl-bg);
+  background: var(--repl-accent-1);
+  border-color: var(--repl-accent-1);
+}
+
+/* ── Screen ────────────────────────────────────────────────────────────── */
+
+.skin-repl .repl-screen {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  position: relative; /* anchors the BIOS POST overlay */
+}
+
+.skin-repl .repl-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(1rem, 3vw, 2.25rem) clamp(1rem, 4vw, 3rem);
+  scrollbar-width: thin;
+}
+
+.skin-repl .repl-view { display: none; }
+/* On-demand print: the hero (home) is always in the stream; a section shows
+   only after a command or tab has printed it. Printed blocks set themselves
+   off from the transcript with a hairline + gap. */
+.skin-repl .repl-view.repl-hero { display: block; }
+.skin-repl .repl-view.is-printed { display: block; }
+.skin-repl .repl-view.is-printed:not(.repl-hero) {
+  border-top: 1px solid var(--repl-faint);
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  scroll-margin-top: 1rem;
+}
+
+.skin-repl .repl-view-head {
+  color: var(--repl-muted);
+  font-size: 0.9em;
+  margin-bottom: 1.1rem;
+}
+.skin-repl .repl-view-dollar { color: var(--repl-accent-1); font-weight: 600; }
+.skin-repl .repl-view-target { color: var(--repl-accent-2); }
+
+/* ── Home: neofetch panel ──────────────────────────────────────────────── */
+
+.skin-repl .repl-neofetch {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.25rem 2rem;
+  align-items: start;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--repl-faint);
+}
+
+/* ── Home: live mini-session (replaces the old empty emblem box) ───────── */
+.skin-repl .repl-session {
+  font-size: 0.82em;
+  line-height: 1.45;
+  color: var(--repl-muted);
+  min-width: 13ch;
+  white-space: pre;
+}
+.skin-repl .repl-session-line {
+  display: block;
+  min-height: 1.45em;
+}
+.skin-repl .repl-session-prompt {
+  color: var(--repl-accent-1);
+  font-weight: 600;
+}
+
+.skin-repl .repl-neofetch-user {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+.skin-repl .repl-neofetch-user-name { color: var(--repl-accent-1); }
+.skin-repl .repl-neofetch-at,
+.skin-repl .repl-neofetch-host { color: var(--repl-muted); }
+
+.skin-repl .repl-neofetch-name {
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--repl-ink);
+  margin-bottom: 0.9rem;
+}
+
+.skin-repl .repl-neofetch-rows { display: block; }
+
+.skin-repl .repl-neofetch-row {
+  display: grid;
+  grid-template-columns: 9ch minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+}
+.skin-repl .repl-neofetch-row:last-child { border-bottom: 0; }
+
+.skin-repl .repl-neofetch-key {
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--repl-accent-1);
+  white-space: nowrap;
+}
+.skin-repl .repl-neofetch-val {
+  font-size: 0.9em;
+  color: var(--repl-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Theme swatch strip */
+.skin-repl .repl-swatches {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+}
+.skin-repl .repl-swatch {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--repl-border);
+}
+
+/* Transcript */
+.skin-repl .repl-transcript {
+  list-style: none;
+  padding-top: 1rem;
+  font-size: 0.9em;
+}
+.skin-repl .repl-line { padding: 0.08rem 0; overflow-wrap: anywhere; }
+.skin-repl .repl-cmdline { color: var(--repl-ink); }
+.skin-repl .repl-prefix { color: var(--repl-accent-1); font-weight: 600; margin-right: 0.5ch; }
+.skin-repl .repl-cmdtext { color: var(--repl-ink); }
+.skin-repl .repl-out { color: var(--repl-muted); }
+.skin-repl .repl-out.is-warn { color: var(--repl-accent-2); }
+.skin-repl .repl-link { color: var(--repl-accent-1); text-decoration: underline; text-underline-offset: 2px; }
+.skin-repl .repl-link:hover { color: var(--repl-ink); }
+
+/* help: aligned command table — cmd (accent, bold) / alias (accent, plain) /
+   desc (muted). Columns sized to the widest entry (12ch). */
+.skin-repl .repl-helpline {
+  display: grid;
+  grid-template-columns: 13ch 13ch minmax(0, 1fr);
+  gap: 0 0.75rem;
+  align-items: baseline;
+}
+.skin-repl .repl-help-cmd { color: var(--repl-accent-1); font-weight: 600; white-space: nowrap; }
+.skin-repl .repl-help-alias { color: var(--repl-accent-1); white-space: nowrap; opacity: 0.75; }
+.skin-repl .repl-help-desc { color: var(--repl-muted); }
+
+/* ── Projects: directory listing ───────────────────────────────────────── */
+
+.skin-repl .repl-listing-total {
+  color: var(--repl-muted);
+  font-size: 0.82em;
+  margin-bottom: 0.75rem;
+}
+
+.skin-repl .repl-project-list { list-style: none; }
+.skin-repl .repl-project {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+}
+.skin-repl .repl-project:first-child { padding-top: 0; }
+
+.skin-repl .repl-project-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.skin-repl .repl-project-idx { color: var(--repl-faint); font-weight: 600; }
+.skin-repl .repl-project-name { color: var(--repl-accent-1); font-weight: 600; }
+.skin-repl .repl-project-meta { color: var(--repl-muted); font-size: 0.85em; }
+
+.skin-repl .repl-project-desc {
+  color: var(--repl-ink);
+  margin: 0.5rem 0;
+  max-width: 70ch;
+}
+
+.skin-repl .repl-project-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.skin-repl .repl-project-stack-key {
+  color: var(--repl-muted);
+  font-size: 0.78em;
+  margin-right: 0.2rem;
+}
+.skin-repl .repl-chip {
+  font-size: 0.78em;
+  color: var(--repl-ink);
+  background: var(--repl-surface);
+  border: 1px solid var(--repl-border);
+  padding: 0.15em 0.5em;
+  white-space: nowrap;
+}
+
+.skin-repl .repl-project-source {
+  color: var(--repl-muted);
+  font-size: 0.8em;
+  margin-top: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.skin-repl .repl-project-source-key { color: var(--repl-faint); margin-right: 0.4ch; }
+.skin-repl .repl-project-source-path { color: var(--repl-muted); }
+
+/* ── Writing ───────────────────────────────────────────────────────────── */
+
+.skin-repl .repl-empty {
+  color: var(--repl-muted);
+  font-size: 0.95em;
+  padding: 1.5rem 0;
+  border-left: 2px solid var(--repl-border);
+}
+
+.skin-repl .repl-writing-list { list-style: none; }
+.skin-repl .repl-writing {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+}
+.skin-repl .repl-writing-link { color: var(--repl-accent-1); text-decoration: underline; text-underline-offset: 2px; }
+.skin-repl .repl-writing-link:hover { color: var(--repl-ink); }
+.skin-repl .repl-writing-date { color: var(--repl-muted); font-size: 0.85em; margin-left: 0.75rem; }
+.skin-repl .repl-writing-excerpt { color: var(--repl-ink); margin-top: 0.4rem; max-width: 70ch; }
+
+/* ── Experience: changelog ─────────────────────────────────────────────── */
+
+.skin-repl .repl-exp-list { list-style: none; }
+.skin-repl .repl-exp {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+}
+.skin-repl .repl-exp:first-child { padding-top: 0; }
+
+.skin-repl .repl-exp-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.skin-repl .repl-exp-hash { color: var(--repl-faint); font-weight: 600; }
+.skin-repl .repl-exp-company { color: var(--repl-accent-1); font-weight: 600; }
+.skin-repl .repl-exp-period { color: var(--repl-muted); font-size: 0.85em; }
+
+.skin-repl .repl-exp-role { color: var(--repl-muted); font-size: 0.9em; margin-top: 0.15rem; }
+.skin-repl .repl-exp-desc { color: var(--repl-ink); margin: 0.5rem 0; max-width: 70ch; }
+
+.skin-repl .repl-exp-points { list-style: none; margin: 0.4rem 0; }
+.skin-repl .repl-exp-point { color: var(--repl-ink); padding-left: 1ch; max-width: 72ch; }
+.skin-repl .repl-exp-bullet { color: var(--repl-accent-1); }
+
+/* ── Skills: env-style groups ──────────────────────────────────────────── */
+
+.skin-repl .repl-skill-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem 2rem;
+}
+.skin-repl .repl-skill-group-title {
+  color: var(--repl-accent-2);
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-bottom: 0.5rem;
+}
+.skin-repl .repl-skill-group-sign { color: var(--repl-muted); }
+
+.skin-repl .repl-skill-list { list-style: none; }
+.skin-repl .repl-skill {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--repl-faint);
+  font-size: 0.88em;
+}
+.skin-repl .repl-skill-name { color: var(--repl-muted); overflow-wrap: anywhere; }
+.skin-repl .repl-skill-flag { color: var(--repl-faint); white-space: nowrap; }
+.skin-repl .repl-skill.is-primary .repl-skill-name { color: var(--repl-ink); }
+.skin-repl .repl-skill.is-primary .repl-skill-flag { color: var(--repl-accent-1); }
+
+/* ── Contact: CTA ──────────────────────────────────────────────────────── */
+
+.skin-repl .repl-contact { max-width: 60ch; }
+.skin-repl .repl-contact-line { color: var(--repl-ink); font-size: 1.05em; }
+.skin-repl .repl-contact-cta {
+  color: var(--repl-accent-1);
+  font-weight: 600;
+  font-size: 1.2em;
+  margin: 1.25rem 0 0.75rem;
+}
+.skin-repl .repl-contact-link {
+  display: inline-block;
+  color: var(--repl-accent-1);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-bottom: 1rem;
+}
+.skin-repl .repl-contact-link:hover { color: var(--repl-ink); }
+.skin-repl .repl-contact-note { color: var(--repl-muted); font-size: 0.9em; }
+
+/* ── Prompt line ───────────────────────────────────────────────────────── */
+
+/* The live prompt is the last line of the stream — a plain buffer line with
+   no surface of its own and no separating border; horizontal inset comes
+   from .repl-viewport's padding so it aligns with the transcript. */
+.skin-repl .repl-promptline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0;
+  cursor: text;
+}
+
+.skin-repl .repl-prompt-user { color: var(--repl-accent-1); font-weight: 600; }
+.skin-repl .repl-prompt-path { color: var(--repl-muted); font-weight: 600; margin-right: 0.5ch; }
+.skin-repl .repl-prompt-spacer { width: 0.5ch; }
+.skin-repl .repl-prompt-echo { color: var(--repl-ink); overflow-wrap: anywhere; }
+
+/* The single justified keyframe: block-caret blink. */
+.skin-repl .repl-caret {
+  display: inline-block;
+  width: 0.62ch;
+  color: var(--repl-accent-1);
+  animation: repl-caret-blink 1.1s step-end infinite;
+}
+
+/* The real input is visually hidden but focusable and full-bleed so any
+   click in the prompt line lands focus there; the echo + caret above render
+   the actual text. */
+.skin-repl .repl-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+  border: 0;
+  background: transparent;
+}
+
+@keyframes repl-caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── Boot: BIOS POST overlay ─────────────────────────────────────────────── */
+
+.skin-repl .repl-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--repl-bg);
+  padding: clamp(1rem, 3vw, 2.25rem) clamp(1rem, 4vw, 3rem);
+  overflow: hidden;
+  font-size: 0.92em;
+}
+.skin-repl .repl-boot-line {
+  min-height: 1.5em;
+  white-space: pre;
+  overflow-wrap: break-word;
+}
+.skin-repl .repl-boot-line.is-accent { color: var(--repl-accent-1); font-weight: 600; }
+.skin-repl .repl-boot-line.is-dim { color: var(--repl-muted); }
+.skin-repl .repl-boot-caret {
+  color: var(--repl-accent-1);
+  animation: repl-caret-blink 1.1s step-end infinite;
+}
+
+/* While the POST is running, the prompt line is out of the loop. */
+.skin-repl.is-booting .repl-promptline { visibility: hidden; }
+
+/* ── Status bar ────────────────────────────────────────────────────────── */
+
+.skin-repl .repl-statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.4rem 1rem;
+  background: var(--repl-accent-1);
+  color: var(--repl-bg);
+  font-size: 0.78em;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.skin-repl .repl-statusbar::-webkit-scrollbar { display: none; }
+
+/* Active-buffer segment: inverted (bg fill + accent text) like tmux/vim. */
+.skin-repl .repl-status-repl {
+  background: var(--repl-bg);
+  color: var(--repl-accent-1);
+  padding: 0.15em 0.55em;
+}
+.skin-repl .repl-status-path { color: var(--repl-bg); }
+.skin-repl .repl-status-counts,
+.skin-repl .repl-status-clock { color: var(--repl-bg); }
+.skin-repl .repl-status-status { color: var(--repl-bg); margin-left: auto; }
+.skin-repl .repl-status-version { color: var(--repl-bg); opacity: 0.85; }
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .skin-repl { font-size: 13px; }
+
+  .skin-repl .repl-titlebar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .skin-repl .repl-titlebar-nav { overflow-x: auto; }
+
+  .skin-repl .repl-neofetch { grid-template-columns: 1fr; gap: 1rem; }
+  .skin-repl .repl-session { display: none; }
+
+  .skin-repl .repl-status-version { display: none; }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .skin-repl .repl-caret { animation: none; opacity: 1; }
+  .skin-repl .repl-boot-caret { animation: none; opacity: 1; }
+  .skin-repl,
+  .skin-repl.is-on,
+  .skin-repl.is-settled { transition: none; transform: none; }
+}
