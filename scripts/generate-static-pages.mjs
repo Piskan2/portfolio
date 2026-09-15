@@ -302,7 +302,14 @@ ${aboutHtml}
         .join('\n')
     : '      <p class="empty">No published writing yet</p>'
 
-  const profileBody = `    <header class="hero">
+  // Terminal title bar matches the landing page so the Full-profile transition
+  // stays within the same dark window chrome. The host is derived from the name.
+  const profileBody = `    <header class="term-bar">
+      <span class="term-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="term-title">${esc(host)}@portfolio \u2014 profile</span>
+    </header>
+    <div class="panel">
+    <header class="hero">
       <h1>${esc(profile.name)}</h1>
       <span class="role">${esc(profile.role)}</span>
 ${metaHtml}
@@ -326,7 +333,8 @@ ${contactHtml}
   </section>
     <footer>
       <p>${esc(profile.name)} &middot; ${esc(profile.role)}</p>
-    </footer>`
+    </footer>
+    </div>`
 
   const profileLdJson = jsonLdScript({
     '@context': 'https://schema.org',

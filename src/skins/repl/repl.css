@@ -529,7 +529,7 @@
 /* ── Responsive ────────────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {
-  .skin-repl { font-size: 13px; }
+  .skin-repl { font-size: 14px; }
 
   .skin-repl .repl-titlebar {
     flex-direction: column;
@@ -541,7 +541,20 @@
   .skin-repl .repl-neofetch { grid-template-columns: 1fr; gap: 1rem; }
   .skin-repl .repl-session { display: none; }
 
+  /* Keep the identity (repl) + stats (counts) on the bar; drop path, clock,
+     status and version so the status bar fits narrow phones instead of the
+     hidden horizontal scroll it previously used. */
+  .skin-repl .repl-status-path { display: none; }
+  .skin-repl .repl-status-clock { display: none; }
+  .skin-repl .repl-status-status { display: none; }
   .skin-repl .repl-status-version { display: none; }
+  .skin-repl .repl-statusbar { gap: 0.6rem; }
+}
+
+/* Hide the autosuggest placeholder on very narrow screens so the prompt line
+   does not overflow; the run hint above it still shows what to type. */
+@media (max-width: 420px) {
+  .skin-repl .repl-prompt-placeholder { display: none; }
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────────── */

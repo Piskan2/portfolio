@@ -1,24 +1,28 @@
 /* ==========================================================================
-   seo.css — clean, semantic, print-friendly layout for the static pages
-   (landing + profile).
+   seo.css — crawlable static profile page, dark phosphor terminal theme.
 
-   Conventions kept here on purpose:
+   Same phosphor palette + monospace stack as the landing (landing.css) and the
+   REPL skin (repl.css) so every entry point reads as one site. Conventions
+   kept on purpose:
      - flat color fills and solid 1px borders only,
-     - square corners everywhere (no rounded corners),
+     - square corners everywhere,
      - no layered blur, no translucent panels,
      - no pictographic glyphs; typography carries the voice.
+   All content stays in static HTML for bots/HR; @media print goes light-on-white.
    ========================================================================== */
 
 :root {
-  --ink: #0f172a;
-  --ink-soft: #334155;
-  --muted: #64748b;
-  --accent: #0b6b4f;
-  --accent-strong: #094f3b;
-  --rule: #e2e8f0;
-  --surface: #ffffff;
-  --bg: #f8fafc;
-  --on-accent: #ffffff;
+  /* Dark phosphor palette — identical values to landing.css so the pages match. */
+  --seo-bg: #0b120d;
+  --seo-panel: #101a13;
+  --seo-bar: #0e1710;
+  --seo-ink: #d7e8dc;
+  --seo-ink-soft: #b7ccc0;
+  --seo-muted: #8fa899;
+  --seo-green: #3ddc84;
+  --seo-accent-strong: #2bb96a;
+  --seo-amber: #ffc857;
+  --seo-line: #1e2b22;
 }
 
 * {
@@ -32,22 +36,23 @@ html {
 
 body {
   margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  line-height: 1.65;
-  font-size: 17px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--seo-bg);
+  color: var(--seo-ink);
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 a {
-  color: var(--accent);
+  color: var(--seo-green);
   text-underline-offset: 3px;
 }
 
 a:hover {
-  color: var(--accent-strong);
+  color: var(--seo-accent-strong);
 }
 
 /* Exactly one visible heading block per page; keep h1 dominant. */
@@ -56,27 +61,34 @@ h1 {
   line-height: 1.2;
   letter-spacing: -0.01em;
   margin: 0 0 0.4em;
-  color: var(--ink);
+  color: var(--seo-ink);
 }
 
+/* Terminal-comment section marker, matching the landing page. */
 h2 {
-  font-size: 1.25rem;
-  letter-spacing: -0.005em;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   margin: 0 0 0.6em;
   padding-bottom: 0.35em;
-  border-bottom: 2px solid var(--accent);
-  color: var(--ink);
+  border-bottom: 1px solid var(--seo-line);
+  color: var(--seo-green);
+}
+
+h2::before {
+  content: "# ";
+  color: var(--seo-muted);
 }
 
 h3 {
   font-size: 1.05rem;
   margin: 0 0 0.2em;
-  color: var(--ink);
+  color: var(--seo-ink);
 }
 
 p {
   margin: 0 0 1em;
-  color: var(--ink-soft);
+  color: var(--seo-ink-soft);
 }
 
 /* Content shell: a centered, bounded column with a crisp bottom rule. */
@@ -86,23 +98,59 @@ p {
   padding: 2.5rem 1.5rem 4rem;
 }
 
+/* Terminal window chrome (matches landing.css .term): three square dots + a
+   shell title, then the bordered panel body. */
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--seo-line);
+  background: var(--seo-bar);
+  padding: 0.55rem 0.9rem;
+}
+
+.term-dots {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.term-dots span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #2e4a3a;
+}
+
+.term-title {
+  color: var(--seo-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.panel {
+  border: 1px solid var(--seo-line);
+  border-top: none;
+  background: var(--seo-panel);
+  padding: 2rem 2rem 2.5rem;
+}
+
 .hero {
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--seo-line);
   margin-bottom: 2rem;
 }
 
 .hero .role {
   display: block;
   margin-top: 0.35em;
-  color: var(--muted);
+  color: var(--seo-muted);
   font-size: 1.05rem;
 }
 
 .pitch {
   margin-top: 1.25em;
   font-size: 1.1rem;
-  color: var(--ink-soft);
+  color: var(--seo-ink-soft);
 }
 
 .cta-row {
@@ -112,32 +160,32 @@ p {
   margin-top: 1.75rem;
 }
 
+/* Terminal-style commands. Primary = green fill with the bg as text. */
 .btn {
   display: inline-block;
-  padding: 0.7rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.1;
   text-decoration: none;
-  border: 2px solid var(--accent);
-  color: var(--on-accent);
-  background: var(--accent);
+  border: 1px solid var(--seo-green);
+  background: var(--seo-green);
+  color: var(--seo-bg);
 }
 
 .btn:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  color: var(--on-accent);
+  background: transparent;
+  color: var(--seo-green);
 }
 
 .btn.secondary {
   background: transparent;
-  color: var(--accent);
+  color: var(--seo-green);
 }
 
 .btn.secondary:hover {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--seo-green);
+  color: var(--seo-bg);
 }
 
 section {
@@ -152,7 +200,7 @@ section {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
-  color: var(--muted);
+  color: var(--seo-muted);
   font-size: 0.95rem;
 }
 
@@ -164,7 +212,7 @@ section {
 
 .meta .label {
   font-weight: 600;
-  color: var(--ink-soft);
+  color: var(--seo-amber);
 }
 
 /* Skill categories. */
@@ -175,7 +223,7 @@ section {
 }
 
 .skill-group {
-  border: 1px solid var(--rule);
+  border: 1px solid var(--seo-line);
   padding: 1rem 1.1rem 1.1rem;
 }
 
@@ -187,23 +235,23 @@ section {
 
 .skill-group li {
   padding: 0.2rem 0;
-  color: var(--ink-soft);
+  color: var(--seo-ink-soft);
 }
 
 .skill-primary {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--seo-ink);
 }
 
 .skill-primary::before {
   content: "▸ ";
-  color: var(--accent);
+  color: var(--seo-green);
 }
 
 /* Projects + experience timeline. */
 .block {
   padding: 1.25rem 1.25rem 1.25rem 0;
-  border-left: 2px solid var(--rule);
+  border-left: 2px solid var(--seo-line);
   padding-left: 1.5rem;
   margin-bottom: 1.75rem;
 }
@@ -214,14 +262,14 @@ section {
 
 .block .period {
   display: block;
-  color: var(--muted);
+  color: var(--seo-muted);
   font-size: 0.9rem;
   margin-top: 0.15rem;
   margin-bottom: 0.5rem;
 }
 
 .block .location {
-  color: var(--muted);
+  color: var(--seo-muted);
 }
 
 .stack {
@@ -236,8 +284,8 @@ section {
 .stack li {
   font-size: 0.82rem;
   padding: 0.15rem 0.55rem;
-  border: 1px solid var(--rule);
-  color: var(--ink-soft);
+  border: 1px solid var(--seo-line);
+  color: var(--seo-ink-soft);
 }
 
 ul.achievements {
@@ -247,7 +295,7 @@ ul.achievements {
 
 ul.achievements li {
   margin-bottom: 0.35rem;
-  color: var(--ink-soft);
+  color: var(--seo-ink-soft);
 }
 
 /* Education / certs compact lists. */
@@ -259,7 +307,7 @@ ul.achievements li {
 
 .compact li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--seo-line);
 }
 
 .compact li:last-child {
@@ -267,12 +315,12 @@ ul.achievements li {
 }
 
 .compact .year {
-  color: var(--muted);
+  color: var(--seo-muted);
   font-size: 0.9rem;
 }
 
 .empty {
-  color: var(--muted);
+  color: var(--seo-muted);
   font-style: italic;
 }
 
@@ -283,26 +331,26 @@ ul.achievements li {
 footer {
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
-  color: var(--muted);
+  border-top: 1px solid var(--seo-line);
+  color: var(--seo-muted);
   font-size: 0.9rem;
 }
 
 /* Accessible focus rings on every keyboard-operable control. */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--seo-amber);
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
-    animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
   }
 }
 
 @media print {
+  /* Print stays a normal light-on-white résumé. */
   body {
     background: #fff;
     color: #000;
@@ -318,7 +366,42 @@ footer {
     display: none;
   }
 
-  .block {
-    border-left-color: #999;
+  .term-bar,
+  .panel {
+    border: none;
+    background: #fff;
+    padding: 0 0 1rem;
+  }
+
+  .term-dots,
+  .term-title {
+    display: none;
+  }
+
+  h1,
+  h2,
+  h2::before,
+  .pitch,
+  .block p,
+  .skill-group li,
+  ul.achievements li,
+  .block .period,
+  .block .location {
+    color: #000;
+  }
+
+  .skill-primary {
+    color: #000;
+  }
+
+  .btn {
+    display: none;
+  }
+}
+
+/* Mobile polish: give the window body room on narrow screens. */
+@media (max-width: 480px) {
+  .panel {
+    padding: 1.25rem 1.1rem 1.6rem;
   }
 }

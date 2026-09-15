@@ -199,6 +199,16 @@ h2::before {
   outline-offset: 2px;
 }
 
+@media (max-width: 480px) {
+  main.term {
+    padding: 2rem 1rem;
+  }
+
+  .term-body {
+    padding: 1.25rem 1.1rem 1.6rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caret {
     animation: none;
